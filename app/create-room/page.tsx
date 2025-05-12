@@ -6,8 +6,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
-function generateRoomCode(length = 6) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+function generateRoomCode(length = 4) {
+  const chars = "1234567890";
   return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
@@ -22,7 +22,7 @@ export default function CreateRoomPage() {
     setLoading(true);
 
     const code = generateRoomCode();
-    const { data, error } = await supabase
+    const { data, error }: { data: { id: string }[] | null; error: any } = await supabase
       .from("rooms")
       .insert({ code, created_by: name });
 
