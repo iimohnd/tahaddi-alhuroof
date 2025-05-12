@@ -31,7 +31,7 @@ export default function GameRoomPage() {
   }, [roomId]);
 
   async function fetchRoom() {
-    const { data } = await supabase.from("rooms").select("*").eq("id", roomId).single();
+    const { data } = await supabase.from("rooms").select("id").eq("id", roomId).single();
     setRoom(data);
   }
 

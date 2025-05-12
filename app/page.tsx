@@ -42,7 +42,7 @@ export default function HomePage() {
 
       const { data: room } = await supabase
         .from("rooms")
-        .select("*")
+        .select("id")
         .eq("code", code.trim())
         .single();
 
