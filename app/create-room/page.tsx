@@ -26,7 +26,7 @@ export default function CreateRoomPage() {
     // 1. الإدخال بدون select لتفادي 406
     const { error: insertError } = await supabase
       .from("rooms")
-      .insert([{ code, created_by: name }]);
+      .insert([{ code, created_by: name }], { returning: "minimal" } as any);
 
     if (insertError) {
       alert("خطأ في إنشاء الغرفة");
