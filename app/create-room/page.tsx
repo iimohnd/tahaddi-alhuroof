@@ -6,8 +6,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
-function generateRoomCode(length = 4) {
-  const chars = "1234567890";
+function generateRoomCode(length = 6) {
+  const chars = "1234567890"; // كود أرقام فقط
   return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
@@ -22,17 +22,33 @@ export default function CreateRoomPage() {
     setLoading(true);
 
     const code = generateRoomCode();
-    const { data, error }: { data: { id: string }[] | null; error: any } = await supabase
-      .from("rooms")
-      .insert({ code, created_by: name });
 
-    if (error || !data || !data[0]?.id) {
+    // 1. الإدخال بدون إرجاع بيانات (لتجنب 406)
+    const { error: insertError } = await supabase
+      .from("rooms")
+      .insert({ code, created_by: name }, { returning: "minimal" });
+
+    if (insertError) {
       alert("خطأ في إنشاء الغرفة");
       setLoading(false);
       return;
     }
 
-    const roomId = data[0].id;
+    // 2. جلب room.id بناءً على الكود
+    const { data: roomList, error: fetchError } = await supabase
+      .from("rooms")
+      .select("id")
+      .eq("code", code)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    const roomId = roomList?.[0]?.id;
+
+    if (fetchError || !roomId) {
+      alert("تعذر تحديد الغرفة بعد إنشائها");
+      setLoading(false);
+      return;
+    }
 
     const { error: playerErr } = await supabase.from("players").insert({
       room_id: roomId,
