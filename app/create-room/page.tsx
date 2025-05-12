@@ -24,7 +24,10 @@ export default function CreateRoomPage() {
     const code = generateRoomCode();
     const { data: roomData, error: roomErr } = await supabase
       .from("rooms")
-      .insert({ code, created_by: name });
+      .insert({ code, created_by: name }) as {
+        data: { id: string }[] | null;
+        error: any;
+      };
 
     if (roomErr || !roomData || !roomData[0]) {
       alert("خطأ في إنشاء الغرفة");
