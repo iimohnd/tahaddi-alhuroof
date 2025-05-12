@@ -22,20 +22,17 @@ export default function CreateRoomPage() {
     setLoading(true);
 
     const code = generateRoomCode();
-    const { data: roomData, error: roomErr } = await supabase
+    const { data, error } = await supabase
       .from("rooms")
-      .insert({ code, created_by: name }) as {
-        data: { id: string }[] | null;
-        error: any;
-      };
+      .insert({ code, created_by: name });
 
-    if (roomErr || !roomData || !roomData[0]) {
+    if (error || !data || !data[0]?.id) {
       alert("خطأ في إنشاء الغرفة");
       setLoading(false);
       return;
     }
 
-    const roomId = roomData[0].id;
+    const roomId = data[0].id;
 
     const { error: playerErr } = await supabase.from("players").insert({
       room_id: roomId,
