@@ -23,7 +23,7 @@ export default function CreateRoomPage() {
 
     const code = generateRoomCode();
 
-    // 1. الإدخال بدون select لتفادي 406
+    // الإدخال بدون select لتفادي 406 (نستخدم returning minimal مع التوافق)
     const { error: insertError } = await supabase
       .from("rooms")
       .insert([{ code, created_by: name }], { returning: "minimal" } as any);
@@ -34,7 +34,7 @@ export default function CreateRoomPage() {
       return;
     }
 
-    // 2. جلب room.id بناءً على الكود
+    // جلب room.id بناءً على الكود
     const { data: roomList, error: fetchError } = await supabase
       .from("rooms")
       .select("id")
