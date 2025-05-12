@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 function generateRoomCode(length = 6) {
-  const chars = "1234567890"; // كود أرقام فقط
+  const chars = "1234567890"; // أرقام فقط
   return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
@@ -23,10 +23,10 @@ export default function CreateRoomPage() {
 
     const code = generateRoomCode();
 
-    // 1. الإدخال بدون إرجاع بيانات (لتجنب 406)
+    // 1. الإدخال بدون select لتفادي 406
     const { error: insertError } = await supabase
       .from("rooms")
-      .insert({ code, created_by: name }, { returning: "minimal" });
+      .insert([{ code, created_by: name }]);
 
     if (insertError) {
       alert("خطأ في إنشاء الغرفة");
