@@ -22,10 +22,9 @@ export default function CreateRoomPage() {
     setLoading(true);
 
     const code = generateRoomCode();
-    const { data: roomData, error: roomErr } = await supabase.from("rooms").insert({
-      code,
-      created_by: name
-    });
+    const { data: roomData, error: roomErr } = await supabase
+      .from("rooms")
+      .insert({ code, created_by: name });
 
     if (roomErr || !roomData || !roomData[0]) {
       alert("خطأ في إنشاء الغرفة");
@@ -33,8 +32,10 @@ export default function CreateRoomPage() {
       return;
     }
 
+    const roomId = roomData[0].id;
+
     const { error: playerErr } = await supabase.from("players").insert({
-      room_id: roomData[0].id,
+      room_id: roomId,
       name,
       is_host: true
     });
@@ -45,7 +46,7 @@ export default function CreateRoomPage() {
       return;
     }
 
-    router.push(`/game/${roomData.id}`);
+    router.push(`/game/${roomId}`);
   }
 
   return (
