@@ -25,7 +25,7 @@ export default function CreateRoomPage() {
     const { data: roomData, error: roomErr } = await supabase.from("rooms").insert({
       code,
       created_by: name
-    }).select().single();
+    }).select("*").single();
 
     if (roomErr || !roomData) {
       alert("خطأ في إنشاء الغرفة");
