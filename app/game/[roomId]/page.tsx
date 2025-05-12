@@ -3,15 +3,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { supabase } from "../../../lib/supabase";
-import { validateAnswer } from "../../../lib/utils";
-
-const categories = ["name", "country", "animal", "plant", "object"];
+import { useParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function GameRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
-  const router = useRouter();
   const [room, setRoom] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +17,6 @@ export default function GameRoomPage() {
   const [roundEnded, setRoundEnded] = useState(false);
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
   const [results, setResults] = useState<any[]>([]);
-  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (!roomId) return;
@@ -31,7 +26,7 @@ export default function GameRoomPage() {
   }, [roomId]);
 
   async function fetchRoom() {
-    const { data } = await supabase.from("rooms").select("id").eq("id", roomId).single();
+    const { data } = await supabase.from("rooms").select("id, code, created_by").eq("id", roomId).single();
     setRoom(data);
   }
 
@@ -57,7 +52,6 @@ export default function GameRoomPage() {
           setCurrentRoundId(payload.new.id);
           setRoundEnded(false);
           setResults([]);
-          setAnswers({});
         }
       )
       .on(
@@ -68,32 +62,10 @@ export default function GameRoomPage() {
             setRoundEnded(true);
             await fetchResults(payload.new.id);
             await updateScores(payload.new.id);
-            setTimeout(() => router.push(`/lobby/${roomId}`), 5000);
           }
         }
       )
       .subscribe();
-  }
-
-  async function submitAnswers() {
-    const localName = localStorage.getItem("player_name");
-    const me = players.find((p) => p.name === localName);
-    if (!me || !currentRoundId) return;
-
-    const entries = Object.entries(answers).filter(([_, v]) => v.trim() !== "");
-
-    for (const [category, word] of entries) {
-      await supabase.from("answers").insert({
-        word,
-        category,
-        round_id: currentRoundId,
-        player_id: me.id,
-        result: "pending"
-      });
-      await validateAnswer(word, category, me.id, currentRoundId);
-    }
-
-    await endRound();
   }
 
   async function fetchResults(roundId: string) {
@@ -192,28 +164,19 @@ export default function GameRoomPage() {
         ))}
       </ul>
 
-      {currentLetter && !roundEnded && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submitAnswers();
-          }}
-          className="mt-6 space-y-4"
+      {currentLetter && (
+        <div className="mt-6 text-xl font-bold text-green-700">
+          الجولة الحالية بالحرف: {currentLetter}
+        </div>
+      )}
+
+      {!roundEnded && currentLetter && (
+        <button
+          onClick={endRound}
+          className="mt-6 bg-red-700 text-white px-4 py-2 rounded"
         >
-          <h2 className="text-xl font-bold text-green-700">الحرف: {currentLetter}</h2>
-          {categories.map((cat) => (
-            <input
-              key={cat}
-              className="w-full p-2 border rounded"
-              placeholder={`اكتب ${cat} بحرف ${currentLetter}`}
-              value={answers[cat] || ""}
-              onChange={(e) => setAnswers({ ...answers, [cat]: e.target.value })}
-            />
-          ))}
-          <button type="submit" className="bg-red-700 text-white px-4 py-2 rounded">
-            انتهيت
-          </button>
-        </form>
+          انتهيت
+        </button>
       )}
 
       {roundEnded && results.length > 0 && (
@@ -221,19 +184,11 @@ export default function GameRoomPage() {
           <h2 className="text-lg font-bold mb-2">النتائج:</h2>
           <ul className="text-sm space-y-1">
             {results.map((res, idx) => (
-              <li
-                key={idx}
-                className={`px-2 py-1 rounded ${
-                  res.result === "valid"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
+              <li key={idx}>
                 🧍 اللاعب: {res.player_id} | 📝 {res.category}: {res.word} → {res.result === "valid" ? "✅" : "❌"}
               </li>
             ))}
           </ul>
-          <p className="text-center mt-4 text-gray-500">🔄 سيتم الرجوع إلى اللوبي خلال ثوانٍ...</p>
         </div>
       )}
 
