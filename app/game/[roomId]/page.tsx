@@ -137,7 +137,7 @@ export default function GameRoomPage() {
       room_id: roomId,
       letter: randomLetter,
       round_number: roundNumber
-    }).select().single();
+    }).select("id").single();
 
     if (data) {
       setCurrentRoundId(data.id);

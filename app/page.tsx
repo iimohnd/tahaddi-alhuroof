@@ -24,7 +24,7 @@ export default function HomePage() {
       const { data: room } = await supabase
         .from("rooms")
         .insert({ code: roomCode })
-        .select()
+        .select("id")
         .single();
 
       if (room) {
