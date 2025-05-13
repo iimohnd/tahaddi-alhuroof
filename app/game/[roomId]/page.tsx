@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@../../lib/supabase";
+import { supabase } from "../../../lib/supabase";
 
 export default function GameRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
