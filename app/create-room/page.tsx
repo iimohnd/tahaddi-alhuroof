@@ -6,9 +6,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
-function generateRoomCode(length = 6) {
-  const chars = "1234567890"; // أرقام فقط
-  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+function generateRoomCode(length = 4) {
+  const digits = "0123456789";
+  return Array.from({ length }, () => digits[Math.floor(Math.random() * digits.length)]).join("");
 }
 
 export default function CreateRoomPage() {
@@ -22,36 +22,20 @@ export default function CreateRoomPage() {
     setLoading(true);
 
     const code = generateRoomCode();
-
-    // الإدخال بدون select لتفادي 406 (نستخدم returning minimal مع التوافق)
-    const { error: insertError } = await supabase
+    const { data: roomData, error: roomErr } = await supabase
       .from("rooms")
-      .insert([{ code, created_by: name }], { returning: "minimal" } as any);
+      .insert({ code, created_by: name })
+      .select("id")
+      .single();
 
-    if (insertError) {
+    if (roomErr || !roomData) {
       alert("خطأ في إنشاء الغرفة");
       setLoading(false);
       return;
     }
 
-    // جلب room.id بناءً على الكود
-    const { data: roomList, error: fetchError } = await supabase
-      .from("rooms")
-      .select("id")
-      .eq("code", code)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    const roomId = roomList?.[0]?.id;
-
-    if (fetchError || !roomId) {
-      alert("تعذر تحديد الغرفة بعد إنشائها");
-      setLoading(false);
-      return;
-    }
-
     const { error: playerErr } = await supabase.from("players").insert({
-      room_id: roomId,
+      room_id: roomData.id,
       name,
       is_host: true
     });
@@ -62,7 +46,7 @@ export default function CreateRoomPage() {
       return;
     }
 
-    router.push(`/game/${roomId}`);
+    router.push(`/game/${roomData.id}`);
   }
 
   return (
